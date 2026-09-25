@@ -31,13 +31,16 @@ export const AuthProvider = ({ children }) => {
         return null;
       }
 
-      if (data) {
-        console.log("Profile ditemukan:", data);
-        console.log("Nama:", data.nama);
-        console.log("Role:", data.role);
-        console.log("Jabatan:", data.jabatan);
-        console.log("Divisi:", data.divisi);
+      if (!data) {
+        console.log("Profile tidak ditemukan.");
+        return null;
       }
+
+      console.log("Profile ditemukan:", data);
+      console.log("Nama:", data.nama);
+      console.log("Role:", data.role);
+      console.log("Jabatan:", data.jabatan);
+      console.log("Divisi:", data.divisi);
 
       return data;
     } catch (error) {
@@ -59,7 +62,7 @@ export const AuthProvider = ({ children }) => {
 
         setSession(session);
 
-        if (session?.user) {
+        if (session?.user?.id) {
           const userProfile = await getProfile(
             session.user.id
           );
@@ -67,6 +70,8 @@ export const AuthProvider = ({ children }) => {
           if (mounted) {
             setProfile(userProfile);
           }
+        } else {
+          setProfile(null);
         }
       } catch (error) {
         console.log("Auth initialize error:", error);
@@ -82,14 +87,17 @@ export const AuthProvider = ({ children }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, currentSession) => {
+        console.log("AUTH EVENT:", event);
+        console.log("AUTH SESSION:", currentSession);
+
         if (!mounted) return;
 
-        setSession(session);
+        setSession(currentSession);
 
-        if (session?.user) {
+        if (currentSession?.user?.id) {
           const userProfile = await getProfile(
-            session.user.id
+            currentSession.user.id
           );
 
           if (mounted) {
@@ -110,6 +118,10 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
+    console.log("=================================");
+    console.log("LOGIN START");
+    console.log("Email:", email);
+
     const { data, error } =
       await supabase.auth.signInWithPassword({
         email,
@@ -117,12 +129,16 @@ export const AuthProvider = ({ children }) => {
       });
 
     if (error) {
+      console.log("Login Supabase error:", error);
       throw error;
     }
 
     if (!data?.user) {
       throw new Error("User tidak ditemukan.");
     }
+
+    console.log("Login berhasil.");
+    console.log("Auth User ID:", data.user.id);
 
     const userProfile = await getProfile(
       data.user.id
@@ -132,7 +148,7 @@ export const AuthProvider = ({ children }) => {
       await supabase.auth.signOut();
 
       throw new Error(
-        "Profile pengguna tidak ditemukan."
+        "Profile pengguna tidak ditemukan di database."
       );
     }
 
@@ -146,7 +162,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } =
+      await supabase.auth.signOut();
 
     if (error) {
       throw error;

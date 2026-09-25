@@ -438,7 +438,7 @@ export default function Home() {
           icon="briefcase-outline"
           title="Jobdesk"
           onPress={() =>
-            router.push('/(tabs)/jobs')
+            router.push('/(tabs)/jobdesk')
           }
         />
 

@@ -1,12 +1,16 @@
 import React from "react";
 import { Stack } from "expo-router";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-export default function AdminLayout() {
+export default function RootLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    />
+    <SafeAreaProvider>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+    </SafeAreaProvider>
   );
 }
