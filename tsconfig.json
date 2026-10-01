@@ -3,18 +3,15 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@/assets/*": [
-        "./assets/*"
-      ]
+      "@/*": ["./frontend/*"],
+      "@/assets/*": ["./frontend/assets/*"]
     }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
-  ]
+    "expo-env.d.ts",
+    "frontend/app/admin/(tab)/menu.jsx"
+, "frontend/app/admin/(tab)/_layout.jsx"  ]
 }
