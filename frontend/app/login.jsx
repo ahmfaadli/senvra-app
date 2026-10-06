@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,7 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useAuth } from "../context/AuthContext";
@@ -56,8 +55,8 @@ export default function Login() {
       }
 
       if (userProfile?.role === "pegawai") {
-       router.replace("/pegawai/home");
-       return;
+        router.replace("/pegawai/home");
+        return;
       }
 
       Alert.alert(
@@ -88,7 +87,34 @@ export default function Login() {
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View style={styles.bg} />
+        {/* =======================================================
+            BACKGROUND SEN VRA
+        ======================================================== */}
+        <View style={styles.bg}>
+          {/* Base navy */}
+          <View style={styles.bgNavy} />
+
+          {/* Turquoise large curved shape */}
+          <View style={styles.bgShapeOne} />
+
+          {/* Navy inner cut */}
+          <View style={styles.bgShapeTwo} />
+
+          {/* Turquoise right shape */}
+          <View style={styles.bgShapeThree} />
+
+          {/* Small decorative circle */}
+          <View style={styles.bgCircleOne} />
+
+          {/* Bottom turquoise curve */}
+          <View style={styles.bgBottomShape} />
+
+          {/* Bottom navy cut */}
+          <View style={styles.bgBottomCut} />
+
+          {/* Subtle overlay */}
+          <View style={styles.bgOverlay} />
+        </View>
 
         <ScrollView
           style={styles.scroll}
@@ -98,13 +124,23 @@ export default function Login() {
           bounces={false}
         >
           <View style={styles.content}>
+
+            {/* ===================================================
+                HEADER
+            ==================================================== */}
             <View style={styles.header}>
+
+              {/* LOGO PNG */}
               <View style={styles.logoBadge}>
-                <View style={styles.logoInner} />
+                <Image
+                  source={require("../assets/images/senvra-logo.png")}
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
               </View>
 
               <Text style={styles.welcomeTitle}>
-                Welcome
+                Selamat Datang
               </Text>
 
               <Text style={styles.welcomeSubtitle}>
@@ -112,7 +148,12 @@ export default function Login() {
               </Text>
             </View>
 
+            {/* ===================================================
+                LOGIN CARD
+            ==================================================== */}
             <View style={styles.card}>
+
+              {/* EMAIL */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>
                   Email
@@ -122,7 +163,7 @@ export default function Login() {
                   <TextInput
                     style={styles.input}
                     placeholder="Masukkan email"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor="#8A98A8"
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -134,6 +175,7 @@ export default function Login() {
                 </View>
               </View>
 
+              {/* PASSWORD */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>
                   Password
@@ -144,7 +186,7 @@ export default function Login() {
                     <TextInput
                       style={styles.passwordInput}
                       placeholder="Masukkan password"
-                      placeholderTextColor="#9CA3AF"
+                      placeholderTextColor="#8A98A8"
                       value={password}
                       onChangeText={setPassword}
                       secureTextEntry={!showPassword}
@@ -157,9 +199,7 @@ export default function Login() {
 
                     <TouchableOpacity
                       onPress={() =>
-                        setShowPassword(
-                          (value) => !value
-                        )
+                        setShowPassword((value) => !value)
                       }
                       disabled={loading}
                       style={styles.eyeButton}
@@ -173,6 +213,7 @@ export default function Login() {
                 </View>
               </View>
 
+              {/* LOGIN BUTTON */}
               <TouchableOpacity
                 style={[
                   styles.loginButton,
@@ -194,6 +235,7 @@ export default function Login() {
                 )}
               </TouchableOpacity>
 
+              {/* DIVIDER */}
               <View style={styles.dividerRow}>
                 <View style={styles.dividerLine} />
 
@@ -204,6 +246,7 @@ export default function Login() {
                 <View style={styles.dividerLine} />
               </View>
 
+              {/* GOOGLE */}
               <View style={styles.bottomTextRow}>
                 <Text style={styles.bottomText}>
                   Don't have an account?
@@ -221,6 +264,9 @@ export default function Login() {
               </View>
             </View>
 
+            {/* ===================================================
+                FOOTER
+            ==================================================== */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>
                 Aplikasi Kepegawaian
@@ -230,6 +276,7 @@ export default function Login() {
                 HR Management System
               </Text>
             </View>
+
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -238,9 +285,13 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+  /* ============================================================
+     SAFE AREA & CONTAINER
+  ============================================================ */
+
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F5F9FC",
   },
 
   container: {
@@ -257,17 +308,6 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
 
-  bg: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 320,
-    backgroundColor: "#7C3AED",
-    borderBottomLeftRadius: 34,
-    borderBottomRightRadius: 34,
-  },
-
   content: {
     flexGrow: 1,
     width: "100%",
@@ -276,57 +316,203 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  /* ============================================================
+     SENVRA BACKGROUND
+  ============================================================ */
+
+  bg: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: "hidden",
+    backgroundColor: "#123F68",
+  },
+
+  bgNavy: {
+    position: "absolute",
+    top: -120,
+    left: -110,
+    width: 430,
+    height: 530,
+    borderRadius: 240,
+    backgroundColor: "#0F355A",
+    transform: [
+      {
+        rotate: "-16deg",
+      },
+    ],
+  },
+
+  bgShapeOne: {
+    position: "absolute",
+    top: -170,
+    right: -165,
+    width: 520,
+    height: 650,
+    borderRadius: 280,
+    backgroundColor: "#28B8C0",
+    transform: [
+      {
+        rotate: "-24deg",
+      },
+    ],
+  },
+
+  bgShapeTwo: {
+    position: "absolute",
+    top: -70,
+    right: -75,
+    width: 330,
+    height: 480,
+    borderRadius: 200,
+    backgroundColor: "#164D78",
+    transform: [
+      {
+        rotate: "-25deg",
+      },
+    ],
+  },
+
+  bgShapeThree: {
+    position: "absolute",
+    top: 85,
+    right: -190,
+    width: 420,
+    height: 440,
+    borderRadius: 210,
+    backgroundColor: "#2ABAC1",
+    transform: [
+      {
+        rotate: "-12deg",
+      },
+    ],
+  },
+
+  bgCircleOne: {
+    position: "absolute",
+    top: 210,
+    left: -65,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: "rgba(42, 186, 193, 0.85)",
+  },
+
+  bgBottomShape: {
+    position: "absolute",
+    bottom: -310,
+    left: -90,
+    width: 580,
+    height: 500,
+    borderRadius: 290,
+    backgroundColor: "#28B8C0",
+    transform: [
+      {
+        rotate: "-18deg",
+      },
+    ],
+  },
+
+  bgBottomCut: {
+    position: "absolute",
+    bottom: -220,
+    left: 70,
+    width: 340,
+    height: 300,
+    borderRadius: 180,
+    backgroundColor: "#123F68",
+    transform: [
+      {
+        rotate: "-18deg",
+      },
+    ],
+  },
+
+  bgOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 440,
+    backgroundColor: "rgba(10, 45, 78, 0.08)",
+  },
+
+  /* ============================================================
+     HEADER
+  ============================================================ */
+
   header: {
     alignItems: "center",
-    marginBottom: 18,
+    marginBottom: 20,
   },
 
+  /*
+   * Container logo.
+   * PNG akan tampil di dalam area ini.
+   */
   logoBadge: {
-    width: 72,
-    height: 72,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.18)",
+    width: 150,
+    height: 90,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
+    marginBottom: 2,
+    paddingHorizontal: 0,
   },
 
-  logoInner: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "#FFFFFF",
+  /*
+   * LOGO PNG
+   *
+   * Ganti file:
+   * ../assets/images/senvra-logo.png
+   *
+   * jika nama/path file PNG Anda berbeda.
+   */
+  logoImage: {
+    width: 140,
+    height: 80,
   },
 
   welcomeTitle: {
-    fontSize: 28,
+    fontSize: 27,
     fontWeight: "800",
     color: "#FFFFFF",
-    marginTop: 2,
+    marginTop: 0,
   },
 
   welcomeSubtitle: {
     marginTop: 4,
     fontSize: 13,
-    color: "rgba(255,255,255,0.85)",
+    color: "rgba(255,255,255,0.86)",
     fontWeight: "600",
     textAlign: "center",
   },
 
+  /* ============================================================
+     LOGIN CARD
+  ============================================================ */
+
   card: {
     width: "100%",
     backgroundColor: "#FFFFFF",
-    borderRadius: 22,
-    padding: 18,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
+    borderRadius: 24,
+    padding: 19,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.9)",
+    shadowColor: "#0B3558",
+    shadowOpacity: 0.18,
+    shadowRadius: 22,
     shadowOffset: {
       width: 0,
-      height: 10,
+      height: 12,
     },
-    elevation: 8,
+    elevation: 10,
   },
+
+  /* ============================================================
+     INPUT
+  ============================================================ */
 
   inputGroup: {
     marginBottom: 14,
@@ -335,17 +521,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#374151",
+    color: "#25435F",
     marginBottom: 8,
   },
 
   inputRow: {
-    minHeight: 48,
+    minHeight: 49,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: "#D9E3EB",
     borderRadius: 14,
     paddingHorizontal: 14,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: "#F7FAFC",
     justifyContent: "center",
   },
 
@@ -353,7 +539,7 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingVertical: 0,
     fontSize: 15,
-    color: "#111827",
+    color: "#122D45",
   },
 
   passwordWrap: {
@@ -366,7 +552,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     fontSize: 15,
-    color: "#111827",
+    color: "#122D45",
     paddingVertical: 0,
   },
 
@@ -376,18 +562,30 @@ const styles = StyleSheet.create({
   },
 
   eyeText: {
-    color: "#6D28D9",
+    color: "#17608A",
     fontSize: 13,
     fontWeight: "800",
   },
 
+  /* ============================================================
+     LOGIN BUTTON
+  ============================================================ */
+
   loginButton: {
     height: 52,
     borderRadius: 14,
-    backgroundColor: "#6D28D9",
+    backgroundColor: "#17608A",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 6,
+    shadowColor: "#17608A",
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    elevation: 5,
   },
 
   loginButtonDisabled: {
@@ -400,25 +598,33 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
 
+  /* ============================================================
+     DIVIDER
+  ============================================================ */
+
   dividerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 16,
+    marginTop: 17,
     marginBottom: 12,
   },
 
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#E5E7EB",
+    backgroundColor: "#E1E8EE",
   },
 
   dividerText: {
     paddingHorizontal: 10,
-    color: "#6B7280",
+    color: "#728396",
     fontWeight: "700",
     fontSize: 12,
   },
+
+  /* ============================================================
+     GOOGLE
+  ============================================================ */
 
   bottomTextRow: {
     flexDirection: "row",
@@ -430,16 +636,20 @@ const styles = StyleSheet.create({
   },
 
   bottomText: {
-    color: "#6B7280",
+    color: "#718295",
     fontSize: 12,
     fontWeight: "700",
   },
 
   signupLink: {
-    color: "#6D28D9",
+    color: "#17608A",
     fontSize: 12,
     fontWeight: "900",
   },
+
+  /* ============================================================
+     FOOTER
+  ============================================================ */
 
   footer: {
     alignItems: "center",
@@ -448,13 +658,13 @@ const styles = StyleSheet.create({
 
   footerText: {
     fontSize: 13,
-    color: "#6B7280",
+    color: "rgba(255,255,255,0.92)",
     fontWeight: "700",
   },
 
   footerVersion: {
     fontSize: 12,
-    color: "#9CA3AF",
+    color: "rgba(255,255,255,0.65)",
     fontWeight: "700",
     marginTop: 4,
   },

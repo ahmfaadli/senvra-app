@@ -1,90 +1,85 @@
-import React, { useCallback, useState } from 'react';
-
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-
+} from "react-native";
 import {
-  useFocusEffect,
-} from 'expo-router';
-
-import { Ionicons } from '@expo/vector-icons';
-
-import { supabase } from '../../services/supabase';
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { useFocusEffect, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { supabase } from "../../services/supabase";
 
 export default function Reports() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [attendance, setAttendance] =
-    useState(0);
+  const [attendance, setAttendance] = useState(0);
+  const [jobs, setJobs] = useState(0);
+  const [completedJobs, setCompletedJobs] = useState(0);
+  const [requests, setRequests] = useState(0);
 
-  const [jobs, setJobs] =
-    useState(0);
-
-  const [completedJobs, setCompletedJobs] =
-    useState(0);
-
-  const [requests, setRequests] =
-    useState(0);
+  // =========================================================
+  // LOAD REPORTS
+  // =========================================================
 
   const loadReports = async () => {
     try {
-      const attendanceResult =
-        await supabase
-          .from('attendance')
-          .select('id', {
-            count: 'exact',
-            head: true,
-          });
+      setLoading(true);
 
-      const jobsResult =
-        await supabase
-          .from('jobs')
-          .select('id', {
-            count: 'exact',
-            head: true,
-          });
+      const attendanceResult = await supabase
+        .from("attendance")
+        .select("id", {
+          count: "exact",
+          head: true,
+        });
 
-      const completedResult =
-        await supabase
-          .from('jobs')
-          .select('id', {
-            count: 'exact',
-            head: true,
-          })
-          .eq('status', 'Selesai');
+      const jobsResult = await supabase
+        .from("jobs")
+        .select("id", {
+          count: "exact",
+          head: true,
+        });
 
-      const requestsResult =
-        await supabase
-          .from('surat_requests')
-          .select('id', {
-            count: 'exact',
-            head: true,
-          });
+      const completedResult = await supabase
+        .from("jobs")
+        .select("id", {
+          count: "exact",
+          head: true,
+        })
+        .eq("status", "Selesai");
 
-      setAttendance(
-        attendanceResult.count || 0
-      );
+      const requestsResult = await supabase
+        .from("surat_requests")
+        .select("id", {
+          count: "exact",
+          head: true,
+        });
 
-      setJobs(jobsResult.count || 0);
-
-      setCompletedJobs(
-        completedResult.count || 0
-      );
-
-      setRequests(
-        requestsResult.count || 0
-      );
+      setAttendance(attendanceResult?.count || 0);
+      setJobs(jobsResult?.count || 0);
+      setCompletedJobs(completedResult?.count || 0);
+      setRequests(requestsResult?.count || 0);
     } catch (error) {
       console.log(error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
+
+  // =========================================================
+  // LOAD WHEN SCREEN FOCUSED
+  // =========================================================
 
   useFocusEffect(
     useCallback(() => {
@@ -92,153 +87,473 @@ export default function Reports() {
     }, [])
   );
 
+  // =========================================================
+  // REFRESH
+  // =========================================================
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadReports();
+  };
+
+  // =========================================================
+  // RENDER
+  // =========================================================
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top", "bottom"]}
     >
-      <Text style={styles.title}>
-        Laporan
-      </Text>
-
-      <Text style={styles.subtitle}>
-        Ringkasan data aplikasi.
-      </Text>
-
-      {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#175CD3"
-        />
-      ) : (
-        <>
-          <ReportCard
-            icon="time-outline"
-            title="Laporan Kehadiran"
-            value={attendance}
-            description="Total data absensi"
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingBottom: Math.max(
+              45,
+              insets.bottom + 35
+            ),
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+        alwaysBounceVertical={true}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={["#175CD3"]}
+            tintColor="#175CD3"
+            title="Memuat ulang..."
+            progressViewOffset={8}
           />
+        }
+      >
+        {/* ================================================= */}
+        {/* HEADER */}
+        {/* ================================================= */}
 
-          <ReportCard
-            icon="briefcase-outline"
-            title="Laporan Jobdesk"
-            value={jobs}
-            description="Total pekerjaan"
-          />
+        <View style={styles.header}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons
+              name="arrow-back"
+              size={21}
+              color="#101828"
+            />
+          </Pressable>
 
-          <ReportCard
-            icon="checkmark-circle-outline"
-            title="Laporan Progress"
-            value={completedJobs}
-            description="Jobdesk selesai"
-          />
+          <View style={styles.headerText}>
+            <Text style={styles.title}>
+              Laporan
+            </Text>
 
-          <ReportCard
-            icon="document-text-outline"
-            title="Laporan Pengajuan Surat"
-            value={requests}
-            description="Total pengajuan"
-          />
-        </>
-      )}
-    </ScrollView>
+            <Text style={styles.subtitle}>
+              Ringkasan data aplikasi.
+            </Text>
+          </View>
+        </View>
+
+        {/* ================================================= */}
+        {/* SUMMARY INFO */}
+        {/* ================================================= */}
+
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryIcon}>
+            <Ionicons
+              name="analytics-outline"
+              size={19}
+              color="#175CD3"
+            />
+          </View>
+
+          <View style={styles.summaryInfo}>
+            <Text style={styles.summaryTitle}>
+              RINGKASAN SISTEM
+            </Text>
+
+            <Text style={styles.summaryText}>
+              Pantau jumlah data kehadiran, jobdesk,
+              progress, dan pengajuan surat.
+            </Text>
+          </View>
+        </View>
+
+        {/* ================================================= */}
+        {/* CONTENT */}
+        {/* ================================================= */}
+
+        {loading ? (
+          <View style={styles.loadingCard}>
+            <ActivityIndicator
+              size="large"
+              color="#175CD3"
+            />
+
+            <Text style={styles.loadingText}>
+              Memuat laporan...
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.cards}>
+            {/* KEHADIRAN */}
+
+            <ReportCard
+              icon="time-outline"
+              iconBackground="#EFF4FF"
+              iconColor="#175CD3"
+              title="Laporan Kehadiran"
+              value={attendance}
+              description="Total data absensi"
+            />
+
+            {/* JOBDESK */}
+
+            <ReportCard
+              icon="briefcase-outline"
+              iconBackground="#F4F3FF"
+              iconColor="#6941C6"
+              title="Laporan Jobdesk"
+              value={jobs}
+              description="Total pekerjaan"
+            />
+
+            {/* PROGRESS */}
+
+            <ReportCard
+              icon="checkmark-circle-outline"
+              iconBackground="#ECFDF3"
+              iconColor="#027A48"
+              title="Laporan Progress"
+              value={completedJobs}
+              description="Jobdesk selesai"
+            />
+
+            {/* SURAT */}
+
+            <ReportCard
+              icon="document-text-outline"
+              iconBackground="#FFF4ED"
+              iconColor="#C4320A"
+              title="Laporan Pengajuan Surat"
+              value={requests}
+              description="Total pengajuan"
+            />
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
+// =========================================================
+// REPORT CARD
+// =========================================================
+
 function ReportCard({
   icon,
+  iconBackground,
+  iconColor,
   title,
   value,
   description,
 }) {
   return (
     <View style={styles.card}>
-      <View style={styles.icon}>
+      {/* ICON */}
+
+      <View
+        style={[
+          styles.icon,
+          {
+            backgroundColor: iconBackground,
+          },
+        ]}
+      >
         <Ionicons
           name={icon}
-          size={25}
-          color="#175CD3"
+          size={20}
+          color={iconColor}
         />
       </View>
 
+      {/* INFO */}
+
       <View style={styles.info}>
-        <Text style={styles.cardTitle}>
+        <Text
+          style={styles.cardTitle}
+          numberOfLines={1}
+        >
           {title}
         </Text>
 
-        <Text style={styles.value}>
-          {value}
-        </Text>
+        <View style={styles.valueRow}>
+          <Text style={styles.value}>
+            {value}
+          </Text>
+
+          <View
+            style={[
+              styles.statusDot,
+              {
+                backgroundColor: iconColor,
+              },
+            ]}
+          />
+        </View>
 
         <Text style={styles.description}>
           {description}
         </Text>
       </View>
+
+      {/* CHEVRON */}
+
+      <View style={styles.chevron}>
+        <Ionicons
+          name="chevron-forward"
+          size={17}
+          color="#98A2B3"
+        />
+      </View>
     </View>
   );
 }
 
+// =========================================================
+// STYLE
+// =========================================================
+
 const styles = StyleSheet.create({
+  // =======================================================
+  // SAFE AREA
+  // =======================================================
+
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F5F7FB",
+  },
+
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FB',
+    backgroundColor: "#F5F7FB",
   },
 
   content: {
-    padding: 20,
-    paddingBottom: 100,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+
+  // =======================================================
+  // HEADER
+  // =======================================================
+
+  header: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingBottom: 5,
+    marginBottom: 16,
+  },
+
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 11,
+  },
+
+  headerText: {
+    flex: 1,
+    paddingTop: 1,
   },
 
   title: {
     fontSize: 28,
-    fontWeight: '900',
-    color: '#101828',
+    lineHeight: 34,
+    fontWeight: "900",
+    color: "#101828",
+    letterSpacing: -0.4,
   },
 
   subtitle: {
-    color: '#667085',
     marginTop: 5,
-    marginBottom: 20,
+    color: "#6B7280",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+
+  // =======================================================
+  // SUMMARY
+  // =======================================================
+
+  summaryCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+    marginBottom: 12,
+
+    shadowColor: "#101828",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+
+  summaryIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 11,
+    backgroundColor: "#EFF4FF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  summaryInfo: {
+    flex: 1,
+    marginLeft: 11,
+  },
+
+  summaryTitle: {
+    color: "#667085",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+
+  summaryText: {
+    marginTop: 4,
+    color: "#667085",
+    fontSize: 12,
+    lineHeight: 18,
+  },
+
+  // =======================================================
+  // CARDS
+  // =======================================================
+
+  cards: {
+    gap: 12,
   },
 
   card: {
-    backgroundColor: '#FFFFFF',
+    minHeight: 96,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
-    borderColor: '#EAECF0',
-    padding: 18,
-    flexDirection: 'row',
-    gap: 14,
-    marginBottom: 12,
+    borderColor: "#EAECF0",
+
+    shadowColor: "#101828",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
   },
 
   icon: {
-    width: 50,
-    height: 50,
-    borderRadius: 15,
-    backgroundColor: '#EAF2FF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   info: {
     flex: 1,
+    marginLeft: 11,
+    paddingRight: 8,
   },
 
   cardTitle: {
-    fontWeight: '800',
-    color: '#101828',
+    color: "#101828",
+    fontSize: 13,
+    fontWeight: "800",
+    lineHeight: 18,
+  },
+
+  valueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 2,
   },
 
   value: {
     fontSize: 25,
-    fontWeight: '900',
-    color: '#101828',
-    marginTop: 4,
+    lineHeight: 30,
+    fontWeight: "900",
+    color: "#101828",
+  },
+
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginLeft: 7,
   },
 
   description: {
-    fontSize: 12,
-    color: '#667085',
+    marginTop: 1,
+    fontSize: 11,
+    lineHeight: 16,
+    color: "#667085",
+  },
+
+  chevron: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    backgroundColor: "#F8FAFC",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  // =======================================================
+  // LOADING
+  // =======================================================
+
+  loadingCard: {
+    minHeight: 180,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 25,
+
+    shadowColor: "#101828",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+
+  loadingText: {
+    marginTop: 10,
+    color: "#667085",
+    fontSize: 13,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -10,9 +10,14 @@ import {
   View,
 } from "react-native";
 import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import {
   useFocusEffect,
   useRouter,
 } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../../services/supabase";
 
 const STATUS_LABEL = {
@@ -26,10 +31,14 @@ const STATUS_LABEL = {
 
 export default function Requests() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Filter aktif pada summary
+  const [selectedStatus, setSelectedStatus] = useState("all");
 
   const loadRequests = async () => {
     try {
@@ -65,11 +74,7 @@ export default function Requests() {
         });
 
       if (error) {
-        console.error(
-          "LOAD REQUESTS ERROR:",
-          error
-        );
-
+        console.error("LOAD REQUESTS ERROR:", error);
         throw error;
       }
 
@@ -79,8 +84,7 @@ export default function Requests() {
 
       Alert.alert(
         "Gagal",
-        error?.message ||
-          "Gagal mengambil pengajuan surat."
+        error?.message || "Gagal mengambil pengajuan surat."
       );
     } finally {
       setLoading(false);
@@ -94,10 +98,10 @@ export default function Requests() {
     }, [])
   );
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     setRefreshing(true);
     loadRequests();
-  };
+  }, []);
 
   const formatDate = (date) => {
     if (!date) return "-";
@@ -111,10 +115,14 @@ export default function Requests() {
     return `${parts[2]}-${parts[1]}-${parts[0]}`;
   };
 
+  const normalizeStatus = (status) => {
+    return String(status || "")
+      .trim()
+      .toLowerCase();
+  };
+
   const getStatusStyle = (status) => {
-    const normalized = String(
-      status || ""
-    ).toLowerCase();
+    const normalized = normalizeStatus(status);
 
     if (normalized === "approved") {
       return styles.approved;
@@ -128,17 +136,72 @@ export default function Requests() {
   };
 
   const getStatusText = (status) => {
+    const normalized = normalizeStatus(status);
+
+    if (normalized === "pending") {
+      return "Menunggu";
+    }
+
+    if (normalized === "approved") {
+      return "Disetujui";
+    }
+
+    if (normalized === "rejected") {
+      return "Ditolak";
+    }
+
     return (
       STATUS_LABEL[status] ||
-      STATUS_LABEL[String(status || "Pending")] ||
       status ||
-      "Pending"
+      "Menunggu"
     );
   };
 
+  // =========================
+  // HITUNG DATA SUMMARY
+  // =========================
+
+  const allCount = requests.length;
+
+  const pendingCount = useMemo(() => {
+    return requests.filter(
+      (item) =>
+        normalizeStatus(item.status) === "pending"
+    ).length;
+  }, [requests]);
+
+  const approvedCount = useMemo(() => {
+    return requests.filter(
+      (item) =>
+        normalizeStatus(item.status) === "approved"
+    ).length;
+  }, [requests]);
+
+  // =========================
+  // FILTER DATA
+  // =========================
+
+  const filteredRequests = useMemo(() => {
+    if (selectedStatus === "all") {
+      return requests;
+    }
+
+    return requests.filter(
+      (item) =>
+        normalizeStatus(item.status) === selectedStatus
+    );
+  }, [requests, selectedStatus]);
+
+  // =========================
+  // LOADING
+  // =========================
+
   if (loading) {
     return (
-      <View style={styles.loading}>
+      <SafeAreaView
+        style={styles.loading}
+        edges={["top", "bottom"]}
+      >
         <ActivityIndicator
           size="large"
           color="#175CD3"
@@ -147,193 +210,506 @@ export default function Requests() {
         <Text style={styles.loadingText}>
           Memuat pengajuan surat...
         </Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView
+    <SafeAreaView
       style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-        />
-      }
+      edges={["top"]}
     >
-      <Text style={styles.title}>
-        Pengajuan Surat
-      </Text>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingBottom: Math.max(
+              45,
+              insets.bottom + 35
+            ),
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={["#175CD3"]}
+            tintColor="#175CD3"
+            progressViewOffset={8}
+          />
+        }
+      >
+        {/* =========================
+            HEADER
+        ========================= */}
 
-      <Text style={styles.subtitle}>
-        Kelola pengajuan surat dari pegawai.
-      </Text>
-
-      <View style={styles.summary}>
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryNumber}>
-            {requests.length}
-          </Text>
-
-          <Text style={styles.summaryLabel}>
-            Semua
-          </Text>
-        </View>
-
-        <View style={styles.summaryItem}>
-          <Text
-            style={[
-              styles.summaryNumber,
-              { color: "#B54708" },
+        <View style={styles.header}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.backButton,
+              pressed && styles.backButtonPressed,
             ]}
+            onPress={() => router.back()}
           >
-            {
-              requests.filter(
-                (item) =>
-                  String(item.status).toLowerCase() ===
-                  "pending"
-              ).length
-            }
-          </Text>
+            <Ionicons
+              name="arrow-back"
+              size={21}
+              color="#101828"
+            />
+          </Pressable>
 
-          <Text style={styles.summaryLabel}>
-            Menunggu
-          </Text>
+          <View style={styles.headerText}>
+            <Text style={styles.title}>
+              Pengajuan Surat
+            </Text>
+
+            <Text style={styles.subtitle}>
+              Kelola pengajuan surat dari pegawai.
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.summaryItem}>
-          <Text
+        {/* =========================
+            SUMMARY
+        ========================= */}
+
+        <View style={styles.summaryCard}>
+          <Pressable
             style={[
-              styles.summaryNumber,
-              { color: "#027A48" },
+              styles.summaryItem,
+              selectedStatus === "all" &&
+                styles.summaryItemActive,
             ]}
+            onPress={() => setSelectedStatus("all")}
           >
-            {
-              requests.filter(
-                (item) =>
-                  String(item.status).toLowerCase() ===
-                  "approved"
-              ).length
-            }
-          </Text>
-
-          <Text style={styles.summaryLabel}>
-            Disetujui
-          </Text>
-        </View>
-      </View>
-
-      {requests.map((item) => (
-        <Pressable
-          key={item.id}
-          style={styles.card}
-          onPress={() =>
-            router.push(
-              `/admin/request-detail?id=${item.id}`
-            )
-          }
-        >
-          <View style={styles.topRow}>
-            <View style={styles.info}>
-              <Text style={styles.employee}>
-                {item.employee?.nama ||
-                  "Pegawai"}
-              </Text>
-
-              <Text style={styles.position}>
-                {item.employee?.jabatan ||
-                  item.employee?.divisi ||
-                  "Pegawai"}
-              </Text>
-            </View>
-
             <View
               style={[
-                styles.statusBadge,
-                getStatusStyle(item.status),
+                styles.summaryIcon,
+                selectedStatus === "all" &&
+                  styles.summaryIconActive,
               ]}
             >
-              <Text style={styles.statusText}>
-                {getStatusText(item.status)}
-              </Text>
+              <Ionicons
+                name="documents-outline"
+                size={16}
+                color={
+                  selectedStatus === "all"
+                    ? "#FFFFFF"
+                    : "#175CD3"
+                }
+              />
             </View>
-          </View>
 
-          <View style={styles.divider} />
-
-          <Text style={styles.type}>
-            {item.type || "Pengajuan Surat"}
-          </Text>
-
-          <Text style={styles.subject}>
-            {item.subject || "Tanpa subjek"}
-          </Text>
-
-          {item.description ? (
             <Text
-              style={styles.description}
-              numberOfLines={2}
+              style={[
+                styles.summaryNumber,
+                selectedStatus === "all" &&
+                  styles.summaryNumberActive,
+              ]}
             >
-              {item.description}
+              {allCount}
             </Text>
-          ) : null}
 
-          <View style={styles.dateContainer}>
-            <View style={styles.dateItem}>
-              <Text style={styles.dateLabel}>
-                Mulai
-              </Text>
-
-              <Text style={styles.dateValue}>
-                {formatDate(item.start_date)}
-              </Text>
-            </View>
-
-            <View style={styles.dateItem}>
-              <Text style={styles.dateLabel}>
-                Selesai
-              </Text>
-
-              <Text style={styles.dateValue}>
-                {formatDate(item.end_date)}
-              </Text>
-            </View>
-
-            <View style={styles.dateItem}>
-              <Text style={styles.dateLabel}>
-                Diajukan
-              </Text>
-
-              <Text style={styles.dateValue}>
-                {formatDate(
-                  item.created_at?.substring(0, 10)
-                )}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.detailButton}>
-            <Text style={styles.detailButtonText}>
-              Lihat Detail →
+            <Text
+              style={[
+                styles.summaryLabel,
+                selectedStatus === "all" &&
+                  styles.summaryLabelActive,
+              ]}
+            >
+              Semua
             </Text>
-          </View>
-        </Pressable>
-      ))}
+          </Pressable>
 
-      {requests.length === 0 && (
-        <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>
-            Belum ada pengajuan
-          </Text>
+          <Pressable
+            style={[
+              styles.summaryItem,
+              selectedStatus === "pending" &&
+                styles.summaryItemActivePending,
+            ]}
+            onPress={() => setSelectedStatus("pending")}
+          >
+            <View
+              style={[
+                styles.summaryIcon,
+                styles.summaryIconPending,
+                selectedStatus === "pending" &&
+                  styles.summaryIconPendingActive,
+              ]}
+            >
+              <Ionicons
+                name="time-outline"
+                size={16}
+                color={
+                  selectedStatus === "pending"
+                    ? "#FFFFFF"
+                    : "#B54708"
+                }
+              />
+            </View>
 
-          <Text style={styles.emptyText}>
-            Pengajuan surat dari pegawai akan muncul
-            di halaman ini.
-          </Text>
+            <Text
+              style={[
+                styles.summaryNumber,
+                styles.summaryNumberPending,
+                selectedStatus === "pending" &&
+                  styles.summaryNumberPendingActive,
+              ]}
+            >
+              {pendingCount}
+            </Text>
+
+            <Text
+              style={[
+                styles.summaryLabel,
+                selectedStatus === "pending" &&
+                  styles.summaryLabelPendingActive,
+              ]}
+            >
+              Menunggu
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={[
+              styles.summaryItem,
+              styles.summaryItemLast,
+              selectedStatus === "approved" &&
+                styles.summaryItemActiveApproved,
+            ]}
+            onPress={() =>
+              setSelectedStatus("approved")
+            }
+          >
+            <View
+              style={[
+                styles.summaryIcon,
+                styles.summaryIconApproved,
+                selectedStatus === "approved" &&
+                  styles.summaryIconApprovedActive,
+              ]}
+            >
+              <Ionicons
+                name="checkmark-circle-outline"
+                size={16}
+                color={
+                  selectedStatus === "approved"
+                    ? "#FFFFFF"
+                    : "#027A48"
+                }
+              />
+            </View>
+
+            <Text
+              style={[
+                styles.summaryNumber,
+                styles.summaryNumberApproved,
+                selectedStatus === "approved" &&
+                  styles.summaryNumberApprovedActive,
+              ]}
+            >
+              {approvedCount}
+            </Text>
+
+            <Text
+              style={[
+                styles.summaryLabel,
+                selectedStatus === "approved" &&
+                  styles.summaryLabelApprovedActive,
+              ]}
+            >
+              Disetujui
+            </Text>
+          </Pressable>
         </View>
-      )}
-    </ScrollView>
+
+        {/* =========================
+            FILTER INFO
+        ========================= */}
+
+        {selectedStatus !== "all" && (
+          <View style={styles.filterInfo}>
+            <View style={styles.filterInfoLeft}>
+              <Ionicons
+                name="filter-outline"
+                size={15}
+                color="#175CD3"
+              />
+
+              <Text style={styles.filterInfoText}>
+                Menampilkan{" "}
+                <Text style={styles.filterInfoBold}>
+                  {selectedStatus === "pending"
+                    ? "pengajuan menunggu"
+                    : "pengajuan disetujui"}
+                </Text>
+              </Text>
+            </View>
+
+            <Pressable
+              onPress={() => setSelectedStatus("all")}
+              hitSlop={8}
+            >
+              <Text style={styles.resetFilter}>
+                Tampilkan Semua
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* =========================
+            REQUEST LIST
+        ========================= */}
+
+        {filteredRequests.map((item) => (
+          <Pressable
+            key={item.id}
+            style={({ pressed }) => [
+              styles.card,
+              pressed && styles.cardPressed,
+            ]}
+            onPress={() =>
+              router.push(
+                `/admin/request/request-detail?id=${item.id}`
+              )
+            }
+          >
+            {/* Employee */}
+
+            <View style={styles.employeeHeader}>
+              <View style={styles.employeeAvatar}>
+                <Text style={styles.employeeAvatarText}>
+                  {(item.employee?.nama || "P")
+                    .substring(0, 1)
+                    .toUpperCase()}
+                </Text>
+              </View>
+
+              <View style={styles.employeeInfo}>
+                <Text style={styles.employee}>
+                  {item.employee?.nama || "Pegawai"}
+                </Text>
+
+                <Text style={styles.position}>
+                  {item.employee?.jabatan ||
+                    item.employee?.divisi ||
+                    "Pegawai"}
+                </Text>
+              </View>
+
+              <View
+                style={[
+                  styles.statusBadge,
+                  getStatusStyle(item.status),
+                ]}
+              >
+                <View
+                  style={[
+                    styles.statusDot,
+                    normalizeStatus(item.status) ===
+                      "approved" &&
+                      styles.statusDotApproved,
+                    normalizeStatus(item.status) ===
+                      "rejected" &&
+                      styles.statusDotRejected,
+                    normalizeStatus(item.status) !==
+                      "approved" &&
+                      normalizeStatus(item.status) !==
+                        "rejected" &&
+                      styles.statusDotPending,
+                  ]}
+                />
+
+                <Text
+                  style={[
+                    styles.statusText,
+                    normalizeStatus(item.status) ===
+                      "approved" &&
+                      styles.statusTextApproved,
+                    normalizeStatus(item.status) ===
+                      "rejected" &&
+                      styles.statusTextRejected,
+                    normalizeStatus(item.status) !==
+                      "approved" &&
+                      normalizeStatus(item.status) !==
+                        "rejected" &&
+                      styles.statusTextPending,
+                  ]}
+                >
+                  {getStatusText(item.status)}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            {/* Request Type */}
+
+            <View style={styles.requestTypeRow}>
+              <View style={styles.requestTypeIcon}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={17}
+                  color="#175CD3"
+                />
+              </View>
+
+              <Text style={styles.type}>
+                {item.type || "Pengajuan Surat"}
+              </Text>
+            </View>
+
+            <Text style={styles.subject}>
+              {item.subject || "Tanpa subjek"}
+            </Text>
+
+            {item.description ? (
+              <Text
+                style={styles.description}
+                numberOfLines={2}
+              >
+                {item.description}
+              </Text>
+            ) : null}
+
+            {/* Dates */}
+
+            <View style={styles.dateContainer}>
+              <View style={styles.dateItem}>
+                <View style={styles.dateIcon}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={14}
+                    color="#667085"
+                  />
+                </View>
+
+                <View style={styles.dateTextContainer}>
+                  <Text style={styles.dateLabel}>
+                    Mulai
+                  </Text>
+
+                  <Text style={styles.dateValue}>
+                    {formatDate(item.start_date)}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.dateItem}>
+                <View style={styles.dateIcon}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={14}
+                    color="#667085"
+                  />
+                </View>
+
+                <View style={styles.dateTextContainer}>
+                  <Text style={styles.dateLabel}>
+                    Selesai
+                  </Text>
+
+                  <Text style={styles.dateValue}>
+                    {formatDate(item.end_date)}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.dateItem}>
+                <View style={styles.dateIcon}>
+                  <Ionicons
+                    name="time-outline"
+                    size={14}
+                    color="#667085"
+                  />
+                </View>
+
+                <View style={styles.dateTextContainer}>
+                  <Text style={styles.dateLabel}>
+                    Diajukan
+                  </Text>
+
+                  <Text style={styles.dateValue}>
+                    {formatDate(
+                      item.created_at?.substring(0, 10)
+                    )}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Detail */}
+
+            <View style={styles.detailButton}>
+              <Text style={styles.detailButtonText}>
+                Lihat Detail
+              </Text>
+
+              <View style={styles.detailIcon}>
+                <Ionicons
+                  name="arrow-forward-outline"
+                  size={16}
+                  color="#175CD3"
+                />
+              </View>
+            </View>
+          </Pressable>
+        ))}
+
+        {/* =========================
+            EMPTY
+        ========================= */}
+
+        {filteredRequests.length === 0 && (
+          <View style={styles.empty}>
+            <View style={styles.emptyIcon}>
+              <Ionicons
+                name={
+                  selectedStatus === "pending"
+                    ? "time-outline"
+                    : selectedStatus === "approved"
+                    ? "checkmark-circle-outline"
+                    : "document-text-outline"
+                }
+                size={28}
+                color="#175CD3"
+              />
+            </View>
+
+            <Text style={styles.emptyTitle}>
+              {selectedStatus === "pending"
+                ? "Tidak ada pengajuan menunggu"
+                : selectedStatus === "approved"
+                ? "Belum ada pengajuan disetujui"
+                : "Belum ada pengajuan"}
+            </Text>
+
+            <Text style={styles.emptyText}>
+              {selectedStatus === "pending"
+                ? "Pengajuan dengan status menunggu akan muncul di sini."
+                : selectedStatus === "approved"
+                ? "Pengajuan yang telah disetujui akan muncul di sini."
+                : "Pengajuan surat dari pegawai akan muncul di halaman ini."}
+            </Text>
+
+            {selectedStatus !== "all" && (
+              <Pressable
+                style={styles.emptyButton}
+                onPress={() =>
+                  setSelectedStatus("all")
+                }
+              >
+                <Text style={styles.emptyButtonText}>
+                  Tampilkan Semua
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -343,9 +719,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F7FB",
   },
 
+  scroll: {
+    flex: 1,
+  },
+
   content: {
-    padding: 20,
-    paddingBottom: 100,
+    paddingTop: 16,
+    paddingBottom: 45,
   },
 
   loading: {
@@ -361,34 +741,130 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
+  // =========================
+  // HEADER
+  // =========================
+
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 18,
+    paddingBottom: 5,
+  },
+
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 11,
+  },
+
+  backButtonPressed: {
+    opacity: 0.75,
+  },
+
+  headerText: {
+    flex: 1,
+  },
+
   title: {
     fontSize: 28,
+    lineHeight: 34,
     fontWeight: "900",
     color: "#101828",
   },
 
   subtitle: {
-    color: "#667085",
     marginTop: 5,
-    marginBottom: 20,
+    color: "#6B7280",
     fontSize: 14,
+    lineHeight: 20,
   },
 
-  summary: {
+  // =========================
+  // SUMMARY
+  // =========================
+
+  summaryCard: {
     flexDirection: "row",
     backgroundColor: "#FFFFFF",
-    borderRadius: 15,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: "#EAECF0",
-    marginBottom: 16,
-    paddingVertical: 15,
+    marginHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 12,
+    overflow: "hidden",
+
+    shadowColor: "#101828",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
   },
 
   summaryItem: {
     flex: 1,
     alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
     borderRightWidth: 1,
     borderRightColor: "#EAECF0",
+  },
+
+  summaryItemLast: {
+    borderRightWidth: 0,
+  },
+
+  summaryItemActive: {
+    backgroundColor: "#EFF4FF",
+  },
+
+  summaryItemActivePending: {
+    backgroundColor: "#FFFAEB",
+  },
+
+  summaryItemActiveApproved: {
+    backgroundColor: "#ECFDF3",
+  },
+
+  summaryIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    backgroundColor: "#EFF4FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 5,
+  },
+
+  summaryIconActive: {
+    backgroundColor: "#175CD3",
+  },
+
+  summaryIconPending: {
+    backgroundColor: "#FFFAEB",
+  },
+
+  summaryIconPendingActive: {
+    backgroundColor: "#B54708",
+  },
+
+  summaryIconApproved: {
+    backgroundColor: "#ECFDF3",
+  },
+
+  summaryIconApprovedActive: {
+    backgroundColor: "#027A48",
   },
 
   summaryNumber: {
@@ -397,51 +873,175 @@ const styles = StyleSheet.create({
     color: "#175CD3",
   },
 
+  summaryNumberActive: {
+    color: "#175CD3",
+  },
+
+  summaryNumberPending: {
+    color: "#B54708",
+  },
+
+  summaryNumberPendingActive: {
+    color: "#B54708",
+  },
+
+  summaryNumberApproved: {
+    color: "#027A48",
+  },
+
+  summaryNumberApprovedActive: {
+    color: "#027A48",
+  },
+
   summaryLabel: {
-    marginTop: 3,
+    marginTop: 2,
+    color: "#667085",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+
+  summaryLabelActive: {
+    color: "#175CD3",
+    fontWeight: "800",
+  },
+
+  summaryLabelPendingActive: {
+    color: "#B54708",
+    fontWeight: "800",
+  },
+
+  summaryLabelApprovedActive: {
+    color: "#027A48",
+    fontWeight: "800",
+  },
+
+  // =========================
+  // FILTER INFO
+  // =========================
+
+  filterInfo: {
+    minHeight: 42,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D6E4FF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  filterInfoLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  filterInfoText: {
+    marginLeft: 7,
     color: "#667085",
     fontSize: 11,
   },
 
+  filterInfoBold: {
+    color: "#101828",
+    fontWeight: "800",
+  },
+
+  resetFilter: {
+    color: "#175CD3",
+    fontSize: 11,
+    fontWeight: "800",
+    marginLeft: 8,
+  },
+
+  // =========================
+  // REQUEST CARD
+  // =========================
+
   card: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 15,
+    borderRadius: 16,
     padding: 16,
+    marginHorizontal: 20,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#EAECF0",
+
+    shadowColor: "#101828",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
   },
 
-  topRow: {
+  cardPressed: {
+    opacity: 0.94,
+  },
+
+  // =========================
+  // EMPLOYEE
+  // =========================
+
+  employeeHeader: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
 
-  info: {
+  employeeAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: "#EFF4FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 11,
+  },
+
+  employeeAvatarText: {
+    color: "#175CD3",
+    fontSize: 19,
+    fontWeight: "800",
+  },
+
+  employeeInfo: {
     flex: 1,
-    paddingRight: 10,
+    paddingRight: 8,
   },
 
   employee: {
     fontSize: 16,
-    fontWeight: "900",
+    fontWeight: "800",
     color: "#101828",
+    lineHeight: 22,
   },
 
   position: {
-    marginTop: 3,
+    marginTop: 4,
     color: "#667085",
-    fontSize: 12,
+    fontSize: 13,
+    lineHeight: 18,
   },
 
+  // =========================
+  // STATUS
+  // =========================
+
   statusBadge: {
-    paddingHorizontal: 9,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
   },
 
   pending: {
-    backgroundColor: "#FEF0C7",
+    backgroundColor: "#FFFAEB",
   },
 
   approved: {
@@ -452,47 +1052,125 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEF3F2",
   },
 
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
+  },
+
+  statusDotPending: {
+    backgroundColor: "#DC6803",
+  },
+
+  statusDotApproved: {
+    backgroundColor: "#039855",
+  },
+
+  statusDotRejected: {
+    backgroundColor: "#D92D20",
+  },
+
   statusText: {
     fontSize: 10,
-    fontWeight: "900",
-    color: "#344054",
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: "#EAECF0",
-    marginVertical: 13,
-  },
-
-  type: {
-    color: "#175CD3",
-    fontSize: 12,
     fontWeight: "800",
   },
 
+  statusTextPending: {
+    color: "#DC6803",
+  },
+
+  statusTextApproved: {
+    color: "#039855",
+  },
+
+  statusTextRejected: {
+    color: "#D92D20",
+  },
+
+  // =========================
+  // DIVIDER
+  // =========================
+
+  divider: {
+    height: 1,
+    backgroundColor: "#F2F4F7",
+    marginVertical: 14,
+  },
+
+  // =========================
+  // REQUEST TYPE
+  // =========================
+
+  requestTypeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  requestTypeIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    backgroundColor: "#EFF4FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 9,
+  },
+
+  type: {
+    flex: 1,
+    color: "#667085",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+
   subject: {
-    marginTop: 4,
+    marginTop: 10,
     color: "#101828",
-    fontSize: 15,
+    fontSize: 19,
+    lineHeight: 26,
     fontWeight: "800",
   },
 
   description: {
     color: "#667085",
-    fontSize: 12,
-    marginTop: 6,
-    lineHeight: 18,
+    fontSize: 13,
+    marginTop: 8,
+    lineHeight: 20,
   },
+
+  // =========================
+  // DATE
+  // =========================
 
   dateContainer: {
     flexDirection: "row",
     marginTop: 15,
-    paddingTop: 12,
+    paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: "#F2F4F7",
   },
 
   dateItem: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingRight: 6,
+  },
+
+  dateIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "#F2F4F7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 6,
+  },
+
+  dateTextContainer: {
     flex: 1,
   },
 
@@ -500,6 +1178,7 @@ const styles = StyleSheet.create({
     color: "#98A2B3",
     fontSize: 10,
     marginBottom: 3,
+    fontWeight: "600",
   },
 
   dateValue: {
@@ -508,11 +1187,19 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
+  // =========================
+  // DETAIL
+  // =========================
+
   detailButton: {
+    minHeight: 40,
     marginTop: 14,
     paddingTop: 11,
     borderTopWidth: 1,
-    borderTopColor: "#EAECF0",
+    borderTopColor: "#F2F4F7",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
 
   detailButtonText: {
@@ -521,20 +1208,54 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
+  detailIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    backgroundColor: "#EFF4FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // =========================
+  // EMPTY
+  // =========================
+
   empty: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 15,
+    borderRadius: 16,
     padding: 30,
+    marginHorizontal: 20,
+    marginTop: 4,
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#EAECF0",
-    marginTop: 10,
+
+    shadowColor: "#101828",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    backgroundColor: "#EFF4FF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
   },
 
   emptyTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "800",
     color: "#101828",
+    textAlign: "center",
   },
 
   emptyText: {
@@ -543,5 +1264,24 @@ const styles = StyleSheet.create({
     color: "#667085",
     fontSize: 12,
     lineHeight: 18,
+  },
+
+  emptyButton: {
+    minHeight: 42,
+    marginTop: 16,
+    paddingHorizontal: 15,
+    paddingVertical: 9,
+    borderRadius: 11,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  emptyButtonText: {
+    color: "#175CD3",
+    fontSize: 12,
+    fontWeight: "800",
   },
 });

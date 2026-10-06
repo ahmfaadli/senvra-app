@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function AdminLayout() {
   const insets = useSafeAreaInsets();
-
   const bottomSpace = insets.bottom;
 
   return (
@@ -14,61 +13,41 @@ export default function AdminLayout() {
       screenOptions={{
         headerShown: false,
 
-        // =================================================
-        // WARNA TAB — SAMA DENGAN PEGAWAI
-        // =================================================
+        // Warna tab
         tabBarActiveTintColor: "#175CD3",
         tabBarInactiveTintColor: "#98A2B3",
 
         tabBarShowLabel: true,
 
-        // =================================================
-        // FONT — SAMA DENGAN PEGAWAI
-        // =================================================
+        // Tampilan label
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "600",
         },
 
-        // =================================================
-        // ICON — SAMA DENGAN PEGAWAI
-        // =================================================
+        // Posisi icon
         tabBarIconStyle: {
           marginBottom: -2,
         },
 
-        // =================================================
-        // TAB BAR — MENGIKUTI SAFE AREA PEGAWAI
-        // =================================================
+        // Safe area dan tampilan tab bar
         tabBarStyle: {
           height: 62 + bottomSpace,
-
           paddingTop: 7,
-
-          paddingBottom:
-            bottomSpace > 0
-              ? bottomSpace + 4
-              : 8,
-
+          paddingBottom: bottomSpace > 0 ? bottomSpace + 4 : 8,
           backgroundColor: "#FFFFFF",
-
           borderTopWidth: 1,
           borderTopColor: "#EAECF0",
-
           elevation: 10,
-
           shadowOpacity: 0.08,
         },
       }}
     >
-      {/* =================================================
-          BERANDA
-      ================================================= */}
+      {/* Beranda */}
       <Tabs.Screen
         name="index"
         options={{
           title: "Beranda",
-
           tabBarIcon: ({ color, size }) => (
             <Ionicons
               name="home-outline"
@@ -79,14 +58,11 @@ export default function AdminLayout() {
         }}
       />
 
-      {/* =================================================
-          PEGAWAI
-      ================================================= */}
+      {/* Pegawai */}
       <Tabs.Screen
         name="employees"
         options={{
           title: "Pegawai",
-
           tabBarIcon: ({ color, size }) => (
             <Ionicons
               name="people-outline"
@@ -97,14 +73,11 @@ export default function AdminLayout() {
         }}
       />
 
-      {/* =================================================
-          AKTIVITAS
-      ================================================= */}
+      {/* Aktivitas */}
       <Tabs.Screen
         name="attendance"
         options={{
           title: "Aktivitas",
-
           tabBarIcon: ({ color, size }) => (
             <Ionicons
               name="calendar-outline"
@@ -115,14 +88,11 @@ export default function AdminLayout() {
         }}
       />
 
-      {/* =================================================
-          LAINNYA
-      ================================================= */}
+      {/* Lainnya */}
       <Tabs.Screen
         name="menu"
         options={{
           title: "Lainnya",
-
           tabBarIcon: ({ color, size }) => (
             <Ionicons
               name="grid-outline"
@@ -130,98 +100,6 @@ export default function AdminLayout() {
               size={size}
             />
           ),
-        }}
-      />
-
-      {/* =================================================
-          HIDDEN ADMIN PAGES
-          Tetap bisa dipanggil menggunakan:
-          router.push("/admin/jobdesk")
-          router.push("/admin/meetings")
-          dst.
-      ================================================= */}
-
-      <Tabs.Screen
-        name="jobdesk"
-        options={{
-          href: null,
-        }}
-      />
-
-      <Tabs.Screen
-        name="meetings"
-        options={{
-          href: null,
-        }}
-      />
-
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          href: null,
-        }}
-      />
-
-      <Tabs.Screen
-        name="reports"
-        options={{
-          href: null,
-        }}
-      />
-
-      <Tabs.Screen
-        name="requests"
-        options={{
-          href: null,
-        }}
-      />
-
-      <Tabs.Screen
-        name="employee-detail"
-        options={{
-          href: null,
-        }}
-      />
-
-      <Tabs.Screen
-        name="employee-form"
-        options={{
-          href: null,
-        }}
-      />
-
-      <Tabs.Screen
-        name="job-detail"
-        options={{
-          href: null,
-        }}
-      />
-
-      <Tabs.Screen
-        name="job-form"
-        options={{
-          href: null,
-        }}
-      />
-
-      <Tabs.Screen
-        name="meeting-detail"
-        options={{
-          href: null,
-        }}
-      />
-
-      <Tabs.Screen
-        name="meeting-form"
-        options={{
-          href: null,
-        }}
-      />
-
-      <Tabs.Screen
-        name="request-detail"
-        options={{
-          href: null,
         }}
       />
     </Tabs>

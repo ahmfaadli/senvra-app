@@ -9,14 +9,24 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  useFocusEffect,
+  useLocalSearchParams,
+  useRouter,
+} from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 
 import { supabase } from '../../../services/supabase';
 
 export default function MeetingForm() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+
+  const insets = useSafeAreaInsets();
 
   const meetingId = Array.isArray(id) ? id[0] : id;
   const isEdit = !!meetingId;
@@ -338,7 +348,7 @@ export default function MeetingForm() {
           {
             text: 'OK',
             onPress: () => {
-              router.replace('/admin/meetings');
+              router.replace('/admin/meetings/meetings');
             },
           },
         ]
@@ -356,9 +366,15 @@ export default function MeetingForm() {
     }
   };
 
+  /**
+   * LOADING
+   */
   if (loading) {
     return (
-      <View style={styles.loading}>
+      <SafeAreaView
+        style={styles.loading}
+        edges={['top', 'bottom']}
+      >
         <ActivityIndicator
           size="large"
           color="#175CD3"
@@ -367,313 +383,332 @@ export default function MeetingForm() {
         <Text style={styles.loadingText}>
           Memuat data meeting...
         </Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={['top']}
     >
-      {/* HEADER */}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingBottom: Math.max(
+              30,
+              insets.bottom + 20
+            ),
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* HEADER */}
 
-      <View style={styles.header}>
+        <View style={styles.header}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons
+              name="arrow-back"
+              size={22}
+              color="#101828"
+            />
+          </Pressable>
+
+          <View style={styles.headerText}>
+            <Text style={styles.title}>
+              {isEdit ? 'Edit Meeting' : 'Tambah Meeting'}
+            </Text>
+
+            <Text style={styles.subtitle}>
+              {isEdit
+                ? 'Perbarui jadwal dan peserta meeting.'
+                : 'Buat jadwal meeting untuk pegawai.'}
+            </Text>
+          </View>
+        </View>
+
+        {/* JUDUL */}
+
+        <View style={styles.section}>
+          <Text style={styles.label}>
+            Judul Meeting
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Contoh: Meeting Project Website"
+            placeholderTextColor="#98A2B3"
+          />
+        </View>
+
+        {/* DESKRIPSI */}
+
+        <View style={styles.section}>
+          <Text style={styles.label}>
+            Deskripsi
+          </Text>
+
+          <TextInput
+            style={[
+              styles.input,
+              styles.textArea,
+            ]}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Masukkan deskripsi meeting"
+            placeholderTextColor="#98A2B3"
+            multiline
+            textAlignVertical="top"
+          />
+        </View>
+
+        {/* TANGGAL */}
+
+        <View style={styles.section}>
+          <Text style={styles.label}>
+            Tanggal
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            value={meetingDate}
+            onChangeText={setMeetingDate}
+            placeholder="2026-12-11"
+            placeholderTextColor="#98A2B3"
+            autoCapitalize="none"
+          />
+
+          <Text style={styles.helper}>
+            Format: YYYY-MM-DD
+          </Text>
+        </View>
+
+        {/* WAKTU */}
+
+        <View style={styles.row}>
+          <View style={styles.half}>
+            <Text style={styles.label}>
+              Jam Mulai
+            </Text>
+
+            <TextInput
+              style={styles.input}
+              value={startTime}
+              onChangeText={setStartTime}
+              placeholder="08:00"
+              placeholderTextColor="#98A2B3"
+              keyboardType="numbers-and-punctuation"
+            />
+          </View>
+
+          <View style={styles.half}>
+            <Text style={styles.label}>
+              Jam Selesai
+            </Text>
+
+            <TextInput
+              style={styles.input}
+              value={endTime}
+              onChangeText={setEndTime}
+              placeholder="10:00"
+              placeholderTextColor="#98A2B3"
+              keyboardType="numbers-and-punctuation"
+            />
+          </View>
+        </View>
+
+        {/* LOKASI */}
+
+        <View style={styles.section}>
+          <Text style={styles.label}>
+            Lokasi
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            value={location}
+            onChangeText={setLocation}
+            placeholder="Contoh: Ruang Meeting / Kantor"
+            placeholderTextColor="#98A2B3"
+          />
+        </View>
+
+        {/* LINK */}
+
+        <View style={styles.section}>
+          <Text style={styles.label}>
+            Link Meeting
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            value={meetingLink}
+            onChangeText={setMeetingLink}
+            placeholder="https://meet.google.com/..."
+            placeholderTextColor="#98A2B3"
+            autoCapitalize="none"
+            keyboardType="url"
+          />
+        </View>
+
+        {/* PEGAWAI */}
+
+        <View style={styles.section}>
+          <Text style={styles.label}>
+            Pilih Pegawai
+          </Text>
+
+          <Text style={styles.helper}>
+            Pilih pegawai yang akan mengikuti meeting.
+          </Text>
+
+          <View style={styles.employeeList}>
+            {employees.length === 0 ? (
+              <View style={styles.noEmployee}>
+                <Ionicons
+                  name="people-outline"
+                  size={30}
+                  color="#98A2B3"
+                />
+
+                <Text style={styles.noEmployeeText}>
+                  Belum ada pegawai aktif.
+                </Text>
+              </View>
+            ) : (
+              employees.map((employee) => {
+                const selected =
+                  selectedEmployees.includes(
+                    employee.id
+                  );
+
+                return (
+                  <Pressable
+                    key={employee.id}
+                    style={[
+                      styles.employeeCard,
+                      selected &&
+                        styles.employeeCardSelected,
+                    ]}
+                    onPress={() =>
+                      toggleEmployee(employee.id)
+                    }
+                  >
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarText}>
+                        {(employee.nama || '?')
+                          .charAt(0)
+                          .toUpperCase()}
+                      </Text>
+                    </View>
+
+                    <View style={styles.employeeInfo}>
+                      <Text
+                        style={styles.employeeName}
+                      >
+                        {employee.nama ||
+                          'Nama tidak tersedia'}
+                      </Text>
+
+                      <Text
+                        style={styles.employeeEmail}
+                      >
+                        {employee.email || '-'}
+                      </Text>
+
+                      <Text
+                        style={styles.employeePosition}
+                      >
+                        {employee.jabatan || '-'}
+                      </Text>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.checkbox,
+                        selected &&
+                          styles.checkboxSelected,
+                      ]}
+                    >
+                      {selected && (
+                        <Ionicons
+                          name="checkmark"
+                          size={18}
+                          color="#FFFFFF"
+                        />
+                      )}
+                    </View>
+                  </Pressable>
+                );
+              })
+            )}
+          </View>
+        </View>
+
+        {/* BUTTON */}
+
         <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={22}
-            color="#101828"
-          />
-        </Pressable>
-
-        <View style={styles.headerText}>
-          <Text style={styles.title}>
-            {isEdit ? 'Edit Meeting' : 'Tambah Meeting'}
-          </Text>
-
-          <Text style={styles.subtitle}>
-            {isEdit
-              ? 'Perbarui jadwal dan peserta meeting.'
-              : 'Buat jadwal meeting untuk pegawai.'}
-          </Text>
-        </View>
-      </View>
-
-      {/* JUDUL */}
-
-      <View style={styles.section}>
-        <Text style={styles.label}>
-          Judul Meeting
-        </Text>
-
-        <TextInput
-          style={styles.input}
-          value={title}
-          onChangeText={setTitle}
-          placeholder="Contoh: Meeting Project Website"
-          placeholderTextColor="#98A2B3"
-        />
-      </View>
-
-      {/* DESKRIPSI */}
-
-      <View style={styles.section}>
-        <Text style={styles.label}>
-          Deskripsi
-        </Text>
-
-        <TextInput
           style={[
-            styles.input,
-            styles.textArea,
+            styles.saveButton,
+            saving && styles.saveButtonDisabled,
           ]}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Masukkan deskripsi meeting"
-          placeholderTextColor="#98A2B3"
-          multiline
-          textAlignVertical="top"
-        />
-      </View>
-
-      {/* TANGGAL */}
-
-      <View style={styles.section}>
-        <Text style={styles.label}>
-          Tanggal
-        </Text>
-
-        <TextInput
-          style={styles.input}
-          value={meetingDate}
-          onChangeText={setMeetingDate}
-          placeholder="2026-12-11"
-          placeholderTextColor="#98A2B3"
-          autoCapitalize="none"
-        />
-
-        <Text style={styles.helper}>
-          Format: YYYY-MM-DD
-        </Text>
-      </View>
-
-      {/* WAKTU */}
-
-      <View style={styles.row}>
-        <View style={styles.half}>
-          <Text style={styles.label}>
-            Jam Mulai
-          </Text>
-
-          <TextInput
-            style={styles.input}
-            value={startTime}
-            onChangeText={setStartTime}
-            placeholder="08:00"
-            placeholderTextColor="#98A2B3"
-            keyboardType="numbers-and-punctuation"
-          />
-        </View>
-
-        <View style={styles.half}>
-          <Text style={styles.label}>
-            Jam Selesai
-          </Text>
-
-          <TextInput
-            style={styles.input}
-            value={endTime}
-            onChangeText={setEndTime}
-            placeholder="10:00"
-            placeholderTextColor="#98A2B3"
-            keyboardType="numbers-and-punctuation"
-          />
-        </View>
-      </View>
-
-      {/* LOKASI */}
-
-      <View style={styles.section}>
-        <Text style={styles.label}>
-          Lokasi
-        </Text>
-
-        <TextInput
-          style={styles.input}
-          value={location}
-          onChangeText={setLocation}
-          placeholder="Contoh: Ruang Meeting / Kantor"
-          placeholderTextColor="#98A2B3"
-        />
-      </View>
-
-      {/* LINK */}
-
-      <View style={styles.section}>
-        <Text style={styles.label}>
-          Link Meeting
-        </Text>
-
-        <TextInput
-          style={styles.input}
-          value={meetingLink}
-          onChangeText={setMeetingLink}
-          placeholder="https://meet.google.com/..."
-          placeholderTextColor="#98A2B3"
-          autoCapitalize="none"
-          keyboardType="url"
-        />
-      </View>
-
-      {/* PEGAWAI */}
-
-      <View style={styles.section}>
-        <Text style={styles.label}>
-          Pilih Pegawai
-        </Text>
-
-        <Text style={styles.helper}>
-          Pilih pegawai yang akan mengikuti meeting.
-        </Text>
-
-        <View style={styles.employeeList}>
-          {employees.length === 0 ? (
-            <View style={styles.noEmployee}>
-              <Ionicons
-                name="people-outline"
-                size={30}
-                color="#98A2B3"
+          onPress={handleSave}
+          disabled={saving}
+        >
+          {saving ? (
+            <>
+              <ActivityIndicator
+                size="small"
+                color="#FFFFFF"
               />
 
-              <Text style={styles.noEmployeeText}>
-                Belum ada pegawai aktif.
+              <Text style={styles.saveButtonText}>
+                Menyimpan...
               </Text>
-            </View>
+            </>
           ) : (
-            employees.map((employee) => {
-              const selected =
-                selectedEmployees.includes(
-                  employee.id
-                );
+            <>
+              <Ionicons
+                name="save-outline"
+                size={20}
+                color="#FFFFFF"
+              />
 
-              return (
-                <Pressable
-                  key={employee.id}
-                  style={[
-                    styles.employeeCard,
-                    selected &&
-                      styles.employeeCardSelected,
-                  ]}
-                  onPress={() =>
-                    toggleEmployee(employee.id)
-                  }
-                >
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                      {(employee.nama || '?')
-                        .charAt(0)
-                        .toUpperCase()}
-                    </Text>
-                  </View>
-
-                  <View style={styles.employeeInfo}>
-                    <Text
-                      style={styles.employeeName}
-                    >
-                      {employee.nama ||
-                        'Nama tidak tersedia'}
-                    </Text>
-
-                    <Text
-                      style={styles.employeeEmail}
-                    >
-                      {employee.email || '-'}
-                    </Text>
-
-                    <Text
-                      style={styles.employeePosition}
-                    >
-                      {employee.jabatan || '-'}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={[
-                      styles.checkbox,
-                      selected &&
-                        styles.checkboxSelected,
-                    ]}
-                  >
-                    {selected && (
-                      <Ionicons
-                        name="checkmark"
-                        size={18}
-                        color="#FFFFFF"
-                      />
-                    )}
-                  </View>
-                </Pressable>
-              );
-            })
+              <Text style={styles.saveButtonText}>
+                {isEdit
+                  ? 'Simpan Perubahan'
+                  : 'Buat Meeting'}
+              </Text>
+            </>
           )}
-        </View>
-      </View>
-
-      {/* BUTTON */}
-
-      <Pressable
-        style={[
-          styles.saveButton,
-          saving && styles.saveButtonDisabled,
-        ]}
-        onPress={handleSave}
-        disabled={saving}
-      >
-        {saving ? (
-          <>
-            <ActivityIndicator
-              size="small"
-              color="#FFFFFF"
-            />
-
-            <Text style={styles.saveButtonText}>
-              Menyimpan...
-            </Text>
-          </>
-        ) : (
-          <>
-            <Ionicons
-              name="save-outline"
-              size={20}
-              color="#FFFFFF"
-            />
-
-            <Text style={styles.saveButtonText}>
-              {isEdit
-                ? 'Simpan Perubahan'
-                : 'Buat Meeting'}
-            </Text>
-          </>
-        )}
-      </Pressable>
-    </ScrollView>
+        </Pressable>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F5F7FB',
+  },
+
   container: {
     flex: 1,
     backgroundColor: '#F5F7FB',
   },
 
   content: {
-    padding: 20,
-    paddingBottom: 120,
+    paddingHorizontal: 20,
+    paddingTop: 16,
   },
 
   loading: {
@@ -691,6 +726,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: "space-between",
     marginBottom: 25,
   },
 
@@ -703,21 +739,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#EAECF0',
+    marginRight: 11,
   },
 
   headerText: {
     flex: 1,
-    marginLeft: 12,
   },
 
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '900',
     color: '#101828',
   },
 
   subtitle: {
-    marginTop: 4,
+    marginTop: 5,
     color: '#667085',
     fontSize: 13,
   },

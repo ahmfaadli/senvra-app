@@ -15,6 +15,12 @@ import {
   useLocalSearchParams,
   useRouter,
 } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+
 import { supabase } from "../../../services/supabase";
 
 const priorities = [
@@ -34,8 +40,9 @@ const priorities = [
 
 export default function JobForm() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
-  /*
+  /**
    * Jika id tersedia:
    * => MODE EDIT
    *
@@ -43,12 +50,10 @@ export default function JobForm() {
    * => MODE TAMBAH
    */
   const { id } = useLocalSearchParams();
-
   const jobId = Array.isArray(id) ? id[0] : id;
   const isEditMode = Boolean(jobId);
 
   const [employees, setEmployees] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -60,7 +65,7 @@ export default function JobForm() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
-  /*
+  /**
    * Progress dan status TIDAK diedit dari admin.
    *
    * Nilainya hanya digunakan ketika update agar
@@ -74,7 +79,7 @@ export default function JobForm() {
     loadData();
   }, [jobId]);
 
-  /*
+  /**
    * ==========================================
    * LOAD DATA
    * ==========================================
@@ -83,7 +88,7 @@ export default function JobForm() {
     try {
       setLoading(true);
 
-      /*
+      /**
        * Ambil pegawai aktif.
        */
       const employeeQuery = supabase
@@ -103,7 +108,7 @@ export default function JobForm() {
           ascending: true,
         });
 
-      /*
+      /**
        * MODE TAMBAH
        *
        * Tidak perlu mengambil data job.
@@ -120,7 +125,7 @@ export default function JobForm() {
         return;
       }
 
-      /*
+      /**
        * MODE EDIT
        *
        * Ambil:
@@ -179,7 +184,7 @@ export default function JobForm() {
       let employeeList =
         employeeResult.data || [];
 
-      /*
+      /**
        * Jika pegawai yang menerima jobdesk
        * sudah tidak aktif, tetap masukkan ke list.
        *
@@ -201,13 +206,22 @@ export default function JobForm() {
 
       setEmployees(employeeList);
 
-      /*
+      /**
        * Isi form dengan data job lama.
        */
-      setEmployeeId(job.employee_id || "");
+      setEmployeeId(
+        job.employee_id || ""
+      );
+
       setTitle(job.title || "");
-      setDescription(job.description || "");
-      setPriority(job.priority || "sedang");
+
+      setDescription(
+        job.description || ""
+      );
+
+      setPriority(
+        job.priority || "sedang"
+      );
 
       setDeadline(
         job.deadline
@@ -233,7 +247,7 @@ export default function JobForm() {
           : ""
       );
 
-      /*
+      /**
        * Simpan progress dan status lama.
        *
        * Admin tidak boleh mengubah progress.
@@ -261,7 +275,7 @@ export default function JobForm() {
     }
   };
 
-  /*
+  /**
    * ==========================================
    * VALIDASI
    * ==========================================
@@ -303,13 +317,17 @@ export default function JobForm() {
       return false;
     }
 
-    /*
+    /**
      * Validasi format deadline sederhana.
      */
     const deadlineRegex =
       /^\d{4}-\d{2}-\d{2}$/;
 
-    if (!deadlineRegex.test(deadline.trim())) {
+    if (
+      !deadlineRegex.test(
+        deadline.trim()
+      )
+    ) {
       Alert.alert(
         "Validasi",
         "Format deadline harus YYYY-MM-DD."
@@ -318,7 +336,7 @@ export default function JobForm() {
       return false;
     }
 
-    /*
+    /**
      * Validasi jam jika diisi.
      */
     if (
@@ -352,7 +370,7 @@ export default function JobForm() {
     return true;
   };
 
-  /*
+  /**
    * ==========================================
    * SUBMIT
    * ==========================================
@@ -365,7 +383,7 @@ export default function JobForm() {
     try {
       setSaving(true);
 
-      /*
+      /**
        * Ambil user yang sedang login.
        */
       const {
@@ -380,13 +398,13 @@ export default function JobForm() {
       if (!user) {
         Alert.alert(
           "Error",
-          "Sesi admin tidak ditemukan."
+          "Sesi admin tidak ditemukan"
         );
 
         return;
       }
 
-      /*
+      /**
        * Pastikan pegawai yang dipilih benar-benar ada.
        */
       const selectedEmployee =
@@ -404,7 +422,7 @@ export default function JobForm() {
         return;
       }
 
-      /*
+      /**
        * ========================================
        * MODE EDIT
        * ========================================
@@ -426,12 +444,12 @@ export default function JobForm() {
           end_time:
             endTime.trim() || null,
 
-          /*
+          /**
            * Status tetap menggunakan status lama.
            */
           status: existingStatus,
 
-          /*
+          /**
            * Progress tetap menggunakan
            * progress lama.
            *
@@ -487,13 +505,13 @@ export default function JobForm() {
             {
               text: "OK",
               onPress: () => {
-                /*
+                /**
                  * Kembali ke detail job
                  * yang baru saja diedit.
                  */
                 router.replace({
                   pathname:
-                    "/admin/job-detail",
+                    "/admin/jobdesk/job-detail",
                   params: {
                     id: data.id,
                   },
@@ -506,7 +524,7 @@ export default function JobForm() {
         return;
       }
 
-      /*
+      /**
        * ========================================
        * MODE TAMBAH
        * ========================================
@@ -524,7 +542,7 @@ export default function JobForm() {
         end_time:
           endTime.trim() || null,
 
-        /*
+        /**
          * Job baru selalu dimulai dari
          * belum dimulai dan progress 0.
          */
@@ -576,7 +594,7 @@ export default function JobForm() {
             text: "OK",
             onPress: () => {
               router.replace(
-                "/admin/jobdesk"
+                "/admin/jobdesk/jobdesk"
               );
             },
           },
@@ -591,25 +609,26 @@ export default function JobForm() {
       Alert.alert(
         "Gagal",
         error?.message ||
-          (
-            isEditMode
-              ? "Jobdesk gagal diperbarui."
-              : "Jobdesk gagal dibuat."
-          )
+          (isEditMode
+            ? "Jobdesk gagal diperbarui."
+            : "Jobdesk gagal dibuat.")
       );
     } finally {
       setSaving(false);
     }
   };
 
-  /*
+  /**
    * ==========================================
    * LOADING
    * ==========================================
    */
   if (loading) {
     return (
-      <View style={styles.center}>
+      <SafeAreaView
+        style={styles.center}
+        edges={["top", "bottom"]}
+      >
         <ActivityIndicator
           size="large"
           color="#4F46E5"
@@ -620,81 +639,116 @@ export default function JobForm() {
             ? "Memuat jobdesk..."
             : "Memuat data pegawai..."}
         </Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
-  /*
+  /**
    * ==========================================
    * FORM
    * ==========================================
    */
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={
-        Platform.OS === "ios"
-          ? "padding"
-          : undefined
-      }
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top"]}
     >
-      <ScrollView
-        contentContainerStyle={
-          styles.content
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={
+          Platform.OS === "ios"
+            ? "padding"
+            : undefined
         }
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>
-          {isEditMode
-            ? "Edit Jobdesk"
-            : "Tambah Jobdesk"}
-        </Text>
+        <ScrollView
+          contentContainerStyle={[
+            styles.content,
+            {
+              paddingBottom: Math.max(
+                40,
+                insets.bottom + 24
+              ),
+            },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* HEADER */}
 
-        <Text style={styles.subtitle}>
-          {isEditMode
-            ? "Perbarui informasi jobdesk yang sudah dibuat"
-            : "Berikan tugas kepada pegawai"}
-        </Text>
+          <View style={styles.header}>
+            <Pressable
+              style={styles.backButton}
+              onPress={() => router.back()}
+              disabled={saving}
+              hitSlop={8}
+            >
+              <Ionicons
+                name="arrow-back"
+                size={22}
+                color="#111827"
+              />
+            </Pressable>
 
-        {/* =================================
-            MODE EDIT INFO
-        ================================== */}
-        {isEditMode && (
-          <View style={styles.editInfoBox}>
-            <Text style={styles.editInfoTitle}>
-              Mode Edit
-            </Text>
+            <View style={styles.headerText}>
+              <Text style={styles.title}>
+                {isEditMode
+                  ? "Edit Jobdesk"
+                  : "Tambah Jobdesk"}
+              </Text>
 
-            <Text style={styles.editInfoText}>
-              Perubahan hanya berlaku pada
-              informasi jobdesk. Progress
-              pekerjaan tetap mengikuti
-              pembaruan dari pegawai.
-            </Text>
+              <Text style={styles.subtitle}>
+                {isEditMode
+                  ? "Perbarui informasi jobdesk yang sudah dibuat"
+                  : "Berikan tugas kepada pegawai"}
+              </Text>
+            </View>
           </View>
-        )}
 
-        {/* =================================
-            PEGAWAI
-        ================================== */}
-        <Text style={styles.label}>
-          Pilih Pegawai *
-        </Text>
+          {/* =================================
+              MODE EDIT INFO
+          ================================== */}
 
-        {employees.length === 0 ? (
-          <View style={styles.warningBox}>
-            <Text style={styles.warningText}>
-              Tidak ada pegawai aktif.
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.employeeList}>
-            {employees.map(
-              (employee) => {
+          {isEditMode && (
+            <View style={styles.editInfoBox}>
+              <Text
+                style={styles.editInfoTitle}
+              >
+                Mode Edit
+              </Text>
+
+              <Text
+                style={styles.editInfoText}
+              >
+                Perubahan hanya berlaku pada
+                informasi jobdesk. Progress
+                pekerjaan tetap mengikuti
+                pembaruan dari pegawai.
+              </Text>
+            </View>
+          )}
+
+          {/* =================================
+              PEGAWAI
+          ================================== */}
+
+          <Text style={styles.label}>
+            Pilih Pegawai *
+          </Text>
+
+          {employees.length === 0 ? (
+            <View style={styles.warningBox}>
+              <Text
+                style={styles.warningText}
+              >
+                Tidak ada pegawai aktif.
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.employeeList}>
+              {employees.map((employee) => {
                 const selected =
-                  employeeId ===
-                  employee.id;
+                  employeeId === employee.id;
 
                 return (
                   <Pressable
@@ -780,303 +834,346 @@ export default function JobForm() {
                     </View>
                   </Pressable>
                 );
-              }
-            )}
-          </View>
-        )}
+              })}
+            </View>
+          )}
 
-        {/* =================================
-            JUDUL
-        ================================== */}
-        <Text style={styles.label}>
-          Judul Jobdesk *
-        </Text>
+          {/* =================================
+              JUDUL
+          ================================== */}
 
-        <TextInput
-          value={title}
-          onChangeText={setTitle}
-          placeholder="Contoh: Membuat laporan bulanan"
-          placeholderTextColor="#9CA3AF"
-          style={styles.input}
-          editable={!saving}
-        />
+          <Text style={styles.label}>
+            Judul Jobdesk *
+          </Text>
 
-        {/* =================================
-            DESKRIPSI
-        ================================== */}
-        <Text style={styles.label}>
-          Deskripsi *
-        </Text>
+          <TextInput
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Contoh: Membuat laporan bulanan"
+            placeholderTextColor="#9CA3AF"
+            style={styles.input}
+            editable={!saving}
+          />
 
-        <TextInput
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Masukkan detail pekerjaan..."
-          placeholderTextColor="#9CA3AF"
-          multiline
-          textAlignVertical="top"
-          style={[
-            styles.input,
-            styles.textArea,
-          ]}
-          editable={!saving}
-        />
+          {/* =================================
+              DESKRIPSI
+          ================================== */}
 
-        {/* =================================
-            PRIORITAS
-        ================================== */}
-        <Text style={styles.label}>
-          Prioritas
-        </Text>
+          <Text style={styles.label}>
+            Deskripsi *
+          </Text>
 
-        <View
-          style={styles.priorityContainer}
-        >
-          {priorities.map((item) => {
-            const selected =
-              priority === item.value;
+          <TextInput
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Masukkan detail pekerjaan..."
+            placeholderTextColor="#9CA3AF"
+            multiline
+            textAlignVertical="top"
+            style={[
+              styles.input,
+              styles.textArea,
+            ]}
+            editable={!saving}
+          />
 
-            return (
-              <Pressable
-                key={item.value}
-                style={[
-                  styles.priorityButton,
-                  selected &&
-                    styles.priorityButtonSelected,
-                ]}
-                onPress={() =>
-                  setPriority(
-                    item.value
-                  )
-                }
-                disabled={saving}
-              >
-                <Text
+          {/* =================================
+              PRIORITAS
+          ================================== */}
+
+          <Text style={styles.label}>
+            Prioritas
+          </Text>
+
+          <View
+            style={
+              styles.priorityContainer
+            }
+          >
+            {priorities.map((item) => {
+              const selected =
+                priority === item.value;
+
+              return (
+                <Pressable
+                  key={item.value}
                   style={[
-                    styles.priorityButtonText,
+                    styles.priorityButton,
                     selected &&
-                      styles.priorityButtonTextSelected,
+                      styles.priorityButtonSelected,
                   ]}
+                  onPress={() =>
+                    setPriority(
+                      item.value
+                    )
+                  }
+                  disabled={saving}
                 >
-                  {item.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+                  <Text
+                    style={[
+                      styles.priorityButtonText,
+                      selected &&
+                        styles.priorityButtonTextSelected,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
 
-        {/* =================================
-            DEADLINE
-        ================================== */}
-        <Text style={styles.label}>
-          Deadline *
-        </Text>
+          {/* =================================
+              DEADLINE
+          ================================== */}
 
-        <TextInput
-          value={deadline}
-          onChangeText={setDeadline}
-          placeholder="YYYY-MM-DD"
-          placeholderTextColor="#9CA3AF"
-          style={styles.input}
-          autoCapitalize="none"
-          editable={!saving}
-        />
+          <Text style={styles.label}>
+            Deadline *
+          </Text>
 
-        <Text style={styles.helper}>
-          Contoh: 2026-10-05
-        </Text>
+          <TextInput
+            value={deadline}
+            onChangeText={setDeadline}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor="#9CA3AF"
+            style={styles.input}
+            autoCapitalize="none"
+            editable={!saving}
+          />
 
-        {/* =================================
-            JAM MULAI
-        ================================== */}
-        <Text style={styles.label}>
-          Jam Mulai
-        </Text>
+          <Text style={styles.helper}>
+            Contoh: 2026-10-05
+          </Text>
 
-        <TextInput
-          value={startTime}
-          onChangeText={setStartTime}
-          placeholder="HH:MM:SS"
-          placeholderTextColor="#9CA3AF"
-          style={styles.input}
-          autoCapitalize="none"
-          editable={!saving}
-        />
+          {/* =================================
+              JAM MULAI
+          ================================== */}
 
-        <Text style={styles.helper}>
-          Contoh: 08:00:00
-        </Text>
+          <Text style={styles.label}>
+            Jam Mulai
+          </Text>
 
-        {/* =================================
-            JAM SELESAI
-        ================================== */}
-        <Text style={styles.label}>
-          Jam Selesai
-        </Text>
+          <TextInput
+            value={startTime}
+            onChangeText={setStartTime}
+            placeholder="HH:MM:SS"
+            placeholderTextColor="#9CA3AF"
+            style={styles.input}
+            autoCapitalize="none"
+            editable={!saving}
+          />
 
-        <TextInput
-          value={endTime}
-          onChangeText={setEndTime}
-          placeholder="HH:MM:SS"
-          placeholderTextColor="#9CA3AF"
-          style={styles.input}
-          autoCapitalize="none"
-          editable={!saving}
-        />
+          <Text style={styles.helper}>
+            Contoh: 08:00:00
+          </Text>
 
-        <Text style={styles.helper}>
-          Contoh: 17:00:00
-        </Text>
+          {/* =================================
+              JAM SELESAI
+          ================================== */}
 
-        {/* =================================
-            PROGRESS INFO SAAT EDIT
-        ================================== */}
-        {isEditMode && (
-          <View style={styles.progressInfoBox}>
+          <Text style={styles.label}>
+            Jam Selesai
+          </Text>
+
+          <TextInput
+            value={endTime}
+            onChangeText={setEndTime}
+            placeholder="HH:MM:SS"
+            placeholderTextColor="#9CA3AF"
+            style={styles.input}
+            autoCapitalize="none"
+            editable={!saving}
+          />
+
+          <Text style={styles.helper}>
+            Contoh: 17:00:00
+          </Text>
+
+          {/* =================================
+              PROGRESS INFO SAAT EDIT
+          ================================== */}
+
+          {isEditMode && (
             <View
-              style={styles.progressInfoHeader}
+              style={
+                styles.progressInfoBox
+              }
             >
               <View
                 style={
-                  styles.progressInfoContent
+                  styles.progressInfoHeader
                 }
               >
-                <Text
+                <View
                   style={
-                    styles.progressInfoTitle
+                    styles.progressInfoContent
                   }
                 >
-                  Progress Pekerjaan
-                </Text>
+                  <Text
+                    style={
+                      styles.progressInfoTitle
+                    }
+                  >
+                    Progress Pekerjaan
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.progressInfoSubtitle
+                    }
+                  >
+                    Progress hanya dapat diperbarui
+                    oleh pegawai.
+                  </Text>
+                </View>
 
                 <Text
                   style={
-                    styles.progressInfoSubtitle
+                    styles.progressNumber
                   }
                 >
-                  Progress hanya dapat diperbarui
-                  oleh pegawai.
+                  {Math.min(
+                    Math.max(
+                      Number(
+                        existingProgress
+                      ) || 0,
+                      0
+                    ),
+                    100
+                  )}
+                  %
                 </Text>
               </View>
 
-              <Text
-                style={styles.progressNumber}
+              <View
+                style={
+                  styles.progressBackground
+                }
               >
-                {Math.min(
-                  Math.max(
-                    Number(
-                      existingProgress
-                    ) || 0,
-                    0
-                  ),
-                  100
-                )}
-                %
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${Math.min(
+                        Math.max(
+                          Number(
+                            existingProgress
+                          ) || 0,
+                          0
+                        ),
+                        100
+                      )}%`,
+                    },
+                  ]}
+                />
+              </View>
+
+              <Text
+                style={
+                  styles.progressReadOnly
+                }
+              >
+                Progress bersifat read-only untuk
+                admin
               </Text>
             </View>
-
-            <View
-              style={
-                styles.progressBackground
-              }
-            >
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${Math.min(
-                      Math.max(
-                        Number(
-                          existingProgress
-                        ) || 0,
-                        0
-                      ),
-                      100
-                    )}%`,
-                  },
-                ]}
-              />
-            </View>
-
-            <Text
-              style={
-                styles.progressReadOnly
-              }
-            >
-              Progress bersifat read-only untuk
-              admin.
-            </Text>
-          </View>
-        )}
-
-        {/* =================================
-            BUTTON
-        ================================== */}
-        <Pressable
-          style={[
-            styles.submitButton,
-            saving &&
-              styles.submitButtonDisabled,
-          ]}
-          onPress={handleSubmit}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator
-              color="#FFFFFF"
-            />
-          ) : (
-            <Text
-              style={styles.submitText}
-            >
-              {isEditMode
-                ? "Simpan Perubahan"
-                : "Kirim Jobdesk ke Pegawai"}
-            </Text>
           )}
-        </Pressable>
 
-        <Pressable
-          style={styles.cancelButton}
-          onPress={() =>
-            router.back()
-          }
-          disabled={saving}
-        >
-          <Text
-            style={styles.cancelText}
+          {/* =================================
+              BUTTON
+          ================================== */}
+
+          <Pressable
+            style={[
+              styles.submitButton,
+              saving &&
+                styles.submitButtonDisabled,
+            ]}
+            onPress={handleSubmit}
+            disabled={saving}
           >
-            Batal
-          </Text>
-        </Pressable>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            {saving ? (
+              <ActivityIndicator
+                color="#FFFFFF"
+              />
+            ) : (
+              <Text
+                style={styles.submitText}
+              >
+                {isEditMode
+                  ? "Simpan Perubahan"
+                  : "Kirim Jobdesk ke Pegawai"}
+              </Text>
+            )}
+          </Pressable>
+
+          <Pressable
+            style={styles.cancelButton}
+            onPress={() =>
+              router.back()
+            }
+            disabled={saving}
+          >
+            <Text
+              style={styles.cancelText}
+            >
+              Batal
+            </Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F6F7FB",
+  },
+
   container: {
     flex: 1,
     backgroundColor: "#F6F7FB",
   },
 
   content: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 11,
+  },
+
+  headerText: {
+    flex: 1,
   },
 
   title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#111827",
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#101828",
   },
 
   subtitle: {
     marginTop: 5,
-    marginBottom: 20,
     color: "#6B7280",
     fontSize: 14,
-    lineHeight: 20,
   },
 
   editInfoBox: {
@@ -1103,9 +1200,9 @@ const styles = StyleSheet.create({
 
   label: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#374151",
-    marginTop: 16,
+    marginTop: 5,
     marginBottom: 8,
   },
 

@@ -80,7 +80,7 @@ export default function EmployeeForm() {
           {
             text: 'OK',
             onPress: () =>
-              router.replace('/admin/employees'),
+              router.replace('/admin/employees/employees'),
           },
         ]
       );

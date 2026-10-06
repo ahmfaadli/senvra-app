@@ -21,7 +21,7 @@ const MENU_ITEMS = [
     icon: "briefcase-outline",
     color: "#EC4899",
     background: "#FCE7F3",
-    route: "/admin/jobdesk",
+    route: "/admin/jobdesk/jobdesk",
   },
   {
     title: "Meeting",
@@ -29,7 +29,7 @@ const MENU_ITEMS = [
     icon: "videocam-outline",
     color: "#0891B2",
     background: "#CFFAFE",
-    route: "/admin/meetings",
+    route: "/admin/meetings/meetings",
   },
   {
     title: "Pengajuan Surat",
@@ -37,7 +37,7 @@ const MENU_ITEMS = [
     icon: "document-text-outline",
     color: "#D97706",
     background: "#FEF3C7",
-    route: "/admin/requests",
+    route: "/admin/request/requests",
   },
   {
     title: "Notifikasi",
@@ -119,13 +119,6 @@ export default function AdminMenu() {
             },
           ]}
         >
-          <View style={styles.headerIcon}>
-            <Ionicons
-              name="grid-outline"
-              size={25}
-              color={colors.primary}
-            />
-          </View>
 
           <View style={styles.headerText}>
             <Text
@@ -136,7 +129,7 @@ export default function AdminMenu() {
                     ? 21
                     : isTablet
                       ? 28
-                      : 24,
+                      : 28,
                 },
               ]}
             >
@@ -293,31 +286,22 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
 
-  headerIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 15,
-    backgroundColor: colors.infoBackground,
-    justifyContent: "center",
-    alignItems: "center",
-    flexShrink: 0,
-  },
-
   headerText: {
     flex: 1,
-    marginLeft: spacing.md,
     minWidth: 0,
   },
 
   title: {
+    fontSize: 28,
     fontWeight: "900",
-    color: colors.textDark,
+    color: "#101828",
   },
 
   subtitle: {
-    marginTop: 3,
-    ...typography.caption,
-    color: colors.textGray,
+    color: "#667085",
+    marginTop: 5,
+    fontSize: 14,
+    lineHeight: 20,
   },
 
   /*
@@ -416,7 +400,7 @@ const styles = StyleSheet.create({
 
   infoContent: {
     flex: 1,
-    marginLeft: 11,
+    marginLeft: 16,
     minWidth: 0,
   },
 

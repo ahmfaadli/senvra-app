@@ -463,7 +463,7 @@ export default function Home() {
           title="Jobdesk Aktif"
           action="Lihat Semua"
           onPress={() =>
-            router.push('/pegawai/(tabs)/jobs')
+            router.push('/pegawai/(tabs)/jobdesk')
           }
         />
 
@@ -486,7 +486,7 @@ export default function Home() {
             <Pressable
               key={job.id}
               onPress={() =>
-                router.push(`/job/${job.id}`)
+                router.push(`/pegawai/job/${job.id}`)
               }
             >
               <Card>
@@ -533,7 +533,7 @@ export default function Home() {
           title="Meeting Terdekat"
           action="Lihat Semua"
           onPress={() =>
-            router.push('/Pegawai/(tabs)/meeting')
+            router.push('/pegawai/(tabs)/meeting')
           }
         />
 
@@ -557,7 +557,7 @@ export default function Home() {
               key={meeting.id}
               onPress={() =>
                 router.push(
-                  `/meeting/${meeting.id}`
+                  `/pegawai/meeting/${meeting.id}`
                 )
               }
             >

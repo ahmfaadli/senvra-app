@@ -9,15 +9,13 @@
     "userInterfaceStyle": "automatic",
 
     "ios": {
-      "icon": "./frontend/assets/expo.icon"
+      "icon": "./frontend/assets/images/icon-senvra.png"
     },
 
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./frontend/assets/images/android-icon-foreground.png",
-        "backgroundImage": "./frontend/assets/images/android-icon-background.png",
-        "monochromeImage": "./frontend/assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#123F68",
+        "foregroundImage": "./frontend/assets/images/icon-senvra-foreground.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.senvraid.senvraapp"
@@ -25,7 +23,7 @@
 
     "web": {
       "output": "static",
-      "favicon": "./frontend/assets/images/favicon.png"
+      "favicon": "./frontend/assets/images/favsenvra.png"
     },
 
     "plugins": [
@@ -38,9 +36,10 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./frontend/assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#123F68",
+          "image": "./frontend/assets/images/splash-senvra.png",
+          "imageWidth": 220,
+          "resizeMode": "contain"
         }
       ]
     ],
@@ -55,6 +54,14 @@
       "eas": {
         "projectId": "77ef7d69-e5a8-4ce4-b125-49d0e51f4891"
       }
+    },
+
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+
+    "updates": {
+      "url": "https://u.expo.dev/77ef7d69-e5a8-4ce4-b125-49d0e51f4891"
     }
   }
 }
